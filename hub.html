@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Strategic Intelligence Hub</title>
+    
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; color: #1e293b; }
+        .glass-panel { background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        
+        .nav-item { cursor: pointer; padding: 12px; border-radius: 6px; transition: all 0.2s; color: #64748b; font-weight: 500; font-size: 0.9rem; }
+        .nav-item:hover { background: #f1f5f9; color: #0f172a; }
+        .nav-active { background: #e0f2fe; color: #0369a1; font-weight: 700; border-left: 4px solid #0f172a; }
+        
+        .hm-cell { text-align: center; padding: 4px; font-weight: bold; color: white; border: 1px solid white; transition: transform 0.1s; border-radius: 4px; font-size: 9px; }
+        .hm-cell:hover { transform: scale(1.1); cursor: pointer; z-index: 10; border-color: #334155; }
+        
+        /* CMM Staircase Styling based on AI CMM images */
+        .cmm-step-col { display: flex; flex-direction: column; justify-content: flex-end; }
+        .cmm-header { background-color: #0d9488; /* Teal-600 */ color: white; text-align: center; font-weight: bold; font-size: 10px; padding: 4px; border-radius: 4px 4px 0 0; }
+        .cmm-body { background-color: #14b8a6; /* Teal-500 */ color: white; padding: 8px; border-radius: 0 0 4px 4px; flex-grow: 1; display: flex; flex-direction: column; }
+        .cmm-list { list-style-type: disc; padding-left: 12px; font-size: 8px; line-height: 1.2; space-y: 4px; flex-grow: 1; }
+        .cmm-list li { margin-bottom: 4px; }
+
+        
+        /* Lens Grid Styling based on AI CMM Lenses images */
+        .lens-header { font-size: 9px; font-weight: bold; text-transform: uppercase; padding: 6px; color: white; text-align: center; border-radius: 3px; background-color: #84cc16; /* Lime-500 */ }
+        .lens-item { background: #0ea5e9; /* Sky-500 */ color: white; font-size: 8px; padding: 4px; text-align: center; border-radius: 3px; display: flex; align-items: center; justify-content: center; min-height: 35px; font-weight: 500; line-height: 1.1; }
+        
+        /* Compact Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-20 shadow-xl">
+        <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 bg-gray-900 rounded flex items-center justify-center text-white"><i class="fa-solid fa-chess-queen"></i></div>
+            <div>
+                <h1 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Enterprise</h1>
+                <span class="text-lg font-bold text-gray-800">Strategy<span class="text-blue-600">Hub</span></span>
+            </div>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2 mb-2">Monitor</div>
+            <div onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item nav-active flex items-center gap-3"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</div>
+            <div onclick="switchView('gap')" id="nav-gap" class="nav-item flex items-center gap-3"><i class="fa-solid fa-sliders-h w-5"></i> Gap Analysis</div>
+            
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2 mb-2 mt-4">Tools</div>
+            <div onclick="switchView('esg')" id="nav-esg" class="nav-item flex items-center gap-3"><i class="fa-solid fa-calculator w-5"></i> Carbon & Cost</div>
+            <div onclick="switchView('heatmap')" id="nav-heatmap" class="nav-item flex items-center gap-3"><i class="fa-solid fa-th w-5"></i> Matrix Heatmap</div>
+            
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2 mb-2 mt-4">Research</div>
+            <div onclick="switchView('library')" id="nav-library" class="nav-item flex items-center gap-3"><i class="fa-solid fa-book-open w-5"></i> Key Articles</div>
+            
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2 mb-2 mt-4">Connect</div>
+            <div onclick="switchView('api')" id="nav-api" class="nav-item flex items-center gap-3"><i class="fa-solid fa-bolt w-5"></i> API Sync</div>
+        </nav>
+        <div class="p-4 border-t text-center text-xs text-gray-400">
+            <button onclick="exportData()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs py-1 rounded mb-2">Export JSON</button>
+            <button onclick="resetDefaults()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1 rounded">Reset App</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        <header class="bg-white border-b px-6 py-3 flex justify-between items-center shadow-sm z-10 h-16">
+            <h2 id="page-title" class="text-xl font-bold text-gray-800">Executive Dashboard</h2>
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold shadow hover:bg-black"><i class="fa-solid fa-file-pdf mr-1"></i> Print / PDF</button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-5 relative">
+            
+            <div id="view-dashboard" class="dashboard-view space-y-3">
+                
+                <div class="glass-panel p-4 bg-indigo-50 border border-indigo-200 flex items-start gap-4">
+                    <i class="fa-solid fa-compass text-indigo-600 mt-1 text-2xl"></i>
+                    <div>
+                        <h3 class="text-lg font-bold text-indigo-900">Purpose: Executive "Flight Simulator"</h3>
+                        <p class="text-sm text-indigo-800 leading-relaxed mt-1">
+                            This dashboard benchmark's your organization's AI maturity against live industry standards. Use it to simulate strategies and identify efficiency gaps.
+                        </p>
+                        <div class="mt-3 flex gap-4 text-xs font-bold">
+                            <button onclick="switchView('gap')" class="flex items-center gap-2 text-white bg-indigo-600 px-3 py-1.5 rounded hover:bg-indigo-700 transition">
+                                <i class="fa-solid fa-sliders-h"></i> Step 1: Set Gap Analysis Sliders
+                            </button>
+                            <button onclick="switchView('esg')" class="flex items-center gap-2 text-indigo-700 bg-white border border-indigo-200 px-3 py-1.5 rounded hover:bg-indigo-50 transition">
+                                <i class="fa-solid fa-calculator"></i> Step 2: Configure Compute
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Live Key Performance Indicators (KPIs)</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <div class="glass-panel p-2 border-t-4 border-blue-600 flex flex-col">
+                            <div class="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mb-0.5">Maturity (AIQ)</div>
+                            <div class="text-lg font-bold text-blue-700 leading-tight" id="kpi-score">3.2</div>
+                            <div class="text-[8px] text-gray-500 font-medium whitespace-nowrap leading-none mt-0.5">Scale 1-5 Capability</div>
+                        </div>
+                        <div class="glass-panel p-2 border-t-4 border-blue-400 flex flex-col">
+                            <div class="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mb-0.5">Adoption Rate</div>
+                            <div class="text-lg font-bold text-blue-700 leading-tight"><span id="kpi-adopt">0</span>%</div>
+                            <div class="text-[8px] text-gray-500 font-medium whitespace-nowrap leading-none mt-0.5">Org Wide Coverage</div>
+                        </div>
+                        <div class="glass-panel p-2 border-t-4 border-indigo-500 flex flex-col">
+                            <div class="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mb-0.5">Efficiency Index</div>
+                            <div class="text-lg font-bold text-blue-700 leading-tight"><span id="kpi-roi">0</span>%</div>
+                            <div class="text-[8px] text-gray-500 font-medium whitespace-nowrap leading-none mt-0.5">Projected Efficiency Gain</div>
+                        </div>
+                        <div class="glass-panel p-2 border-t-4 border-green-500 flex flex-col">
+                            <div class="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mb-0.5">Carbon Cost</div>
+                            <div class="text-lg font-bold text-blue-700 leading-tight" id="kpi-carbon">$0</div>
+                            <div class="text-[8px] text-gray-500 font-medium whitespace-nowrap leading-none mt-0.5">Monthly Cost Estimate</div>
+                        </div>
+                        <div class="glass-panel p-2 border-t-4 border-yellow-500 flex flex-col">
+                            <div class="text-[8px] text-gray-400 font-bold uppercase tracking-wide leading-none mb-0.5">Critical Gaps</div>
+                            <div class="text-lg font-bold text-blue-700 leading-tight" id="kpi-gaps">2</div>
+                            <div class="text-[8px] text-gray-500 font-medium whitespace-nowrap leading-none mt-0.5">vs Industry Benchmark</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-4 h-auto lg:h-[420px]">
+                    <div class="col-span-12 lg:col-span-3 glass-panel p-3 flex flex-col h-full">
+                        <h3 class="font-bold text-gray-700 text-xs mb-1">Your Capability Profile</h3>
+                        <div class="flex-1 relative"><canvas id="radarChart"></canvas></div>
+                    </div>
+                    
+                    <div class="col-span-12 lg:col-span-6 glass-panel p-3 flex flex-col h-full">
+                        <h3 class="font-bold text-gray-700 text-xs mb-1 flex justify-between items-center">
+                            <span id="bubble-title">Industry Efficiency vs. Adoption</span>
+                            <span class="text-[10px] text-blue-500 font-normal flex items-center gap-2">
+                                <span id="sim-indicator" class="hidden font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded uppercase text-[9px]">Viewing Sim</span>
+                                <span><i class="fa-solid fa-computer-mouse mr-1"></i>Click bubbles</span>
+                            </span>
+                        </h3>
+                        <div class="flex-1 relative"><canvas id="scatterChart"></canvas></div>
+                    </div>
+
+                    <div id="strat-panel" class="col-span-12 lg:col-span-3 glass-panel p-4 bg-white border-r-4 border-yellow-400 flex flex-col h-full overflow-y-auto transition-colors duration-300">
+                        <div class="mb-3">
+                            <h3 class="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">Strategic Status</h3>
+                            <div class="text-xs font-bold text-white bg-gray-800 px-2 py-1 rounded inline-block shadow-sm" id="strat-status">CALCULATING</div>
+                        </div>
+                        <div>
+                            <h3 class="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">Recommended Action</h3>
+                            <h4 id="strat-rec-title" class="font-bold text-blue-700 text-sm mb-1 leading-tight">Pending Analysis...</h4>
+                            <p class="text-[10px] text-gray-600 leading-relaxed font-medium" id="strat-rec-detail">
+                                Adjust the sliders in the "Gap Analysis" tab to generate your custom recommendation, or click a bubble to see industry specific actions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-2 text-[9px] text-gray-500 leading-tight">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <strong class="text-gray-700 block mb-1">Bubble Chart Axis & Legend:</strong>
+                            <ul class="list-disc pl-3 space-y-1">
+                                <li><strong>X-Axis (Adoption):</strong> Weighted avg. of maturity (Strategy, Data, Tech, Talent, Gov).</li>
+                                <li><strong>Y-Axis (Efficiency):</strong> ROI based on technical readiness. <span class="font-mono text-blue-600">((Data+Tech+Talent)/15)*20%</span>. 
+                                    <span class="text-gray-400">(Note: Capped at 20% as this represents the theoretical max gain for existing processes without full business model reinvention).</span>
+                                </li>
+                                <li><strong>Bubble Size:</strong> Represents estimated <strong>AI Capital Investment</strong>.</li>
+                            </ul>
+                        </div>
+                        <div class="md:border-l md:pl-4 border-gray-200">
+                            <strong class="text-gray-700 block mb-1">Data Source & Methodology:</strong>
+                            <p>Industry benchmarks are aggregated from 2024 market analysis reports (including Stanford HAI AI Index, McKinsey Global Survey, and Gartner Maturity Models). Scores represent the median maturity of top-quartile performers in each sector.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="view-gap" class="dashboard-view hidden space-y-6">
+                 <div class="glass-panel p-5 bg-blue-50 border border-blue-200">
+                    <h3 class="text-lg font-bold text-blue-900"><i class="fa-solid fa-sliders-h mr-2"></i>Configuration Console</h3>
+                    <p class="text-sm text-blue-800 mt-2">
+                        <strong>Instruction:</strong> Please review the <strong>Capability Maturity Model (CMM)</strong> and <strong>Lenses</strong> below to guide your scoring. Adjust the sliders (1-5) to reflect your organization's current capabilities.
+                        <br>
+                        <strong>Impact:</strong> Changes here immediately recalculate your ROI, Adoption Rate, and position on the Dashboard charts.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Your Maturity and Gap Analysis</h3>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-gray-400 italic">Changes autosave</span>
+                            <button onclick="switchView('dashboard')" class="text-xs bg-blue-600 text-white px-3 py-1 rounded">View Dashboard Impact</button>
+                        </div>
+                    </div>
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="p-4 text-xs uppercase text-gray-500">Dimension</th>
+                                <th class="p-4 text-xs uppercase text-gray-500">Your Score (1-5)</th>
+                                <th class="p-4 text-xs uppercase text-gray-500">Benchmark</th>
+                                <th class="p-4 text-xs uppercase text-gray-500">Gap Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y" id="gap-table"></tbody>
+                    </table>
+                </div>
+
+                <div class="glass-panel p-6 bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Reference: AI Capability Maturity Model (CMM)</h3>
+                    <div class="flex items-end justify-between gap-2 h-[500px] overflow-hidden p-2">
+                        
+                        <div class="cmm-step-col w-1/5 h-[60%]">
+                            <div class="cmm-header">1. Ad Hoc</div>
+                            <div class="cmm-body">
+                                <ul class="cmm-list">
+                                    <li><strong>Limited Awareness:</strong> Little understanding of AI's potential.</li>
+                                    <li><strong>Fragmented Initiatives:</strong> Sporadic projects, no strategy.</li>
+                                    <li><strong>Data Silos:</strong> Disparate, hard to access data.</li>
+                                    <li><strong>Basic Automation:</strong> Tools used, minimal capabilities.</li>
+                                    <li><strong>Minimal Skills:</strong> Lack of AI expertise.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="cmm-step-col w-1/5 h-[70%]">
+                            <div class="cmm-header">2. Emerging</div>
+                            <div class="cmm-body">
+                                <ul class="cmm-list">
+                                    <li><strong>Awareness and Interest:</strong> Org recognizes AI value.</li>
+                                    <li><strong>Centralized Coordination:</strong> Central team explores.</li>
+                                    <li><strong>Data Integration:</strong> Efforts to integrate sources.</li>
+                                    <li><strong>AI Tools:</strong> More advanced tools introduced.</li>
+                                    <li><strong>Training Initiatives:</strong> Programs started to upskill.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="cmm-step-col w-1/5 h-[80%]">
+                            <div class="cmm-header">3. Defined</div>
+                            <div class="cmm-body">
+                                <ul class="cmm-list">
+                                    <li><strong>Strategic Integration:</strong> AI integrated into plans.</li>
+                                    <li><strong>AI in production:</strong> Creating value in products/service.</li>
+                                    <li><strong>Data Governance:</strong> Robust practices in place.</li>
+                                    <li><strong>Advanced Automation:</strong> AI-driven automation prevalent.</li>
+                                    <li><strong>Cross-Functional Teams:</strong> Collaborate on projects.</li>
+                                    <li><strong>AI Skill Development:</strong> Continuous development.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="cmm-step-col w-1/5 h-[90%]">
+                            <div class="cmm-header">4. Managed</div>
+                            <div class="cmm-body">
+                                <ul class="cmm-list">
+                                    <li><strong>Pervasively used:</strong> For digital transformation.</li>
+                                    <li><strong>Data-Driven Decision-Making:</strong> Insights regularly used.</li>
+                                    <li><strong>AI Center of Excellence:</strong> Well-established CoE guides.</li>
+                                    <li><strong>Advanced AI Adoption:</strong> Applied across functions.</li>
+                                    <li><strong>AI Ethics and Compliance:</strong> Robust frameworks.</li>
+                                    <li><strong>Innovation Culture:</strong> Fosters experimentation.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="cmm-step-col w-1/5 h-[100%]">
+                            <div class="cmm-header">5. Transformative</div>
+                            <div class="cmm-body">
+                                <ul class="cmm-list">
+                                    <li><strong>AI is part of business DNA:</strong> Primary innovation driver.</li>
+                                    <li><strong>AI-Led Innovation:</strong> New business models & revenue.</li>
+                                    <li><strong>AI Ecosystem:</strong> Partnerships and collaborations.</li>
+                                    <li><strong>Full Integration:</strong> AI into every facet of org.</li>
+                                    <li><strong>Continuous Learning:</strong> Adapts rapidly to emerging AI.</li>
+                                    <li><strong>Market Leadership:</strong> Setting industry benchmarks.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 bg-white mt-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">AI CMM Lenses & Dimensions</h3>
+                    <div class="grid grid-cols-7 gap-1">
+                        <div class="space-y-1"><div class="lens-header">1. Vision & Strategy</div><div class="lens-item">Vision</div><div class="lens-item">Strategic Planning</div><div class="lens-item">Performance Management</div><div class="lens-item">Performance Tracking</div><div class="lens-item">KPIs</div></div>
+                        <div class="space-y-1"><div class="lens-header">2. Technology</div><div class="lens-item">User Experience</div><div class="lens-item">Accessibility / search</div><div class="lens-item">Auditability</div><div class="lens-item">Scalability</div><div class="lens-item">Integration</div></div>
+                        <div class="space-y-1"><div class="lens-header">3. Analytics</div><div class="lens-item">Data Analysis</div><div class="lens-item">Sandbox and Impact analysis</div><div class="lens-item">Machine Learning</div><div class="lens-item">Dash boarding</div><div class="lens-item">Decisioning</div></div>
+                        <div class="space-y-1"><div class="lens-header">4. Innovation</div><div class="lens-item">Business Models</div><div class="lens-item">Infrastructure & Resources</div><div class="lens-item">User Centric Design</div><div class="lens-item">Partnerships & Ecosystems</div><div class="lens-item">Metrics</div></div>
+                        <div class="space-y-1"><div class="lens-header">5. People & Culture</div><div class="lens-item">Culture and Leadership</div><div class="lens-item">Functions and Organisations</div><div class="lens-item">Team</div><div class="lens-item">Roles</div><div class="lens-item">Knowledge sharing</div></div>
+                        <div class="space-y-1"><div class="lens-header">6. Data</div><div class="lens-item">Data Quality</div><div class="lens-item">Data Modelling</div><div class="lens-item">Data Accessibility</div><div class="lens-item">External Data (Structured)</div><div class="lens-item">External Data (Unstructured)</div></div>
+                        <div class="space-y-1"><div class="lens-header">7. Governance</div><div class="lens-item">Reporting</div><div class="lens-item">Regulatory Compliance</div><div class="lens-item">Ethics & Principles</div><div class="lens-item">Communication</div><div class="lens-item">Education</div></div>
+                    </div>
+                    <div class="text-xs text-center text-gray-400 italic mt-4">Based on AI CMM Lenses diagram.</div>
+                </div>
+            </div>
+
+            <div id="view-heatmap" class="dashboard-view hidden space-y-6">
+                 <div class="glass-panel p-5 bg-blue-50 border border-blue-200">
+                    <h3 class="text-lg font-bold text-blue-900"><i class="fa-solid fa-th mr-2"></i>Comparative Matrix</h3>
+                    <p class="text-sm text-blue-800 mt-2">
+                        <strong>What is this?</strong> A high-level view of maturity scores across major sectors compared to your organization.<br>
+                        <strong>How to use:</strong> Identify sectors with high "Green" density to find potential partners or benchmarks.<br>
+                    </p>
+                </div>
+
+                <div class="glass-panel overflow-hidden">
+                    <table class="w-full table-fixed">
+                        <thead class="bg-gray-100 border-b">
+                            <tr>
+                                <th class="p-1 w-1/6 text-left text-[9px] font-bold uppercase text-gray-500">Sector</th>
+                                <th class="p-1 w-1/6 text-center text-[9px] font-bold uppercase text-gray-500">Strategy</th>
+                                <th class="p-1 w-1/6 text-center text-[9px] font-bold uppercase text-gray-500">Data</th>
+                                <th class="p-1 w-1/6 text-center text-[9px] font-bold uppercase text-gray-500">Talent</th>
+                                <th class="p-1 w-1/6 text-center text-[9px] font-bold uppercase text-gray-500">Gov</th>
+                                <th class="p-1 w-1/6 text-center text-[9px] font-bold uppercase text-gray-500">Tech</th>
+                            </tr>
+                        </thead>
+                        <tbody id="heatmap-body"></tbody>
+                    </table>
+                    <div class="p-2 bg-gray-50 text-[9px] text-gray-500 border-t">
+                        <strong>Heatmap Logic:</strong> 5.0 (Optimized) to 1.0 (Initial)
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-library" class="dashboard-view hidden space-y-6">
+                 <div class="glass-panel p-5 bg-blue-50 border border-blue-200">
+                    <h3 class="text-lg font-bold text-blue-900"><i class="fa-solid fa-book-open mr-2"></i>Key Industry Articles</h3>
+                    <p class="text-sm text-blue-800 mt-2">
+                        <strong>What is this?</strong> A database of active AI use cases, proof-of-concepts (POCs), and research.<br>
+                        <strong>Status Legend:</strong><br>
+                        <span class="inline-block mt-1 bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs mr-2">Scouting</span> Early Research phase.<br>
+                        <span class="inline-block mt-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs mr-2">POC</span> Proof of Concept / Testing.<br>
+                        <span class="inline-block mt-1 bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs mr-2">Scaled</span> Production deployment.
+                    </p>
+                </div>
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Key Articles</h3>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('add-modal').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-1 rounded text-xs font-bold">Add New</button>
+                    </div>
+                </div>
+                <div class="glass-panel overflow-hidden">
+                    <table class="w-full text-left text-sm text-gray-600">
+                        <thead class="bg-gray-50 text-xs uppercase font-bold text-gray-400">
+                            <tr>
+                                <th class="p-4 w-1/3">Use Case / Context</th>
+                                <th class="p-4">Source</th>
+                                <th class="p-4">Status</th> 
+                                <th class="p-4 text-right">Access</th>
+                            </tr>
+                        </thead>
+                        <tbody id="library-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-api" class="dashboard-view hidden space-y-6">
+                 <div class="glass-panel p-5 bg-blue-50 border border-blue-200 mb-6">
+                    <h3 class="text-lg font-bold text-blue-900"><i class="fa-solid fa-bolt mr-2"></i>Integration Hub</h3>
+                    <p class="text-sm text-blue-800 mt-2">
+                        <strong>What is this?</strong> Connectors to external data sources (Excel, Power BI, Notion, etc.).<br>
+                        <strong>How to use:</strong> Click "Sync" to pull external data. (Simulated in this demo).<br>
+                    </p>
+                </div>
+
+                <div class="glass-panel max-w-2xl mx-auto p-6 text-center">
+                    <i class="fa-solid fa-plug text-4xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-bold text-gray-800 mb-6">Data Integrations</h3>
+                    
+                    <div class="space-y-3 mb-8">
+                        <div class="flex items-center justify-between border p-3 rounded hover:bg-gray-50">
+                            <span class="font-bold text-sm"><i class="fa-solid fa-file-excel text-green-600 mr-2"></i>Microsoft Excel</span>
+                            <button onclick="triggerSync(this)" class="bg-white border text-gray-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-100">Click to Sync</button>
+                        </div>
+                        <div class="flex items-center justify-between border p-3 rounded hover:bg-gray-50">
+                            <span class="font-bold text-sm"><i class="fa-solid fa-chart-bar text-yellow-500 mr-2"></i>Microsoft Power BI</span>
+                            <button onclick="triggerSync(this)" class="bg-white border text-gray-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-100">Click to Sync</button>
+                        </div>
+                        <div class="flex items-center justify-between border p-3 rounded hover:bg-gray-50">
+                            <span class="font-bold text-sm"><i class="fa-brands fa-google text-green-600 mr-2"></i>Google Sheets</span>
+                            <button onclick="triggerSync(this)" class="bg-white border text-gray-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-100">Click to Sync</button>
+                        </div>
+                        <div class="flex items-center justify-between border p-3 rounded hover:bg-gray-50">
+                            <span class="font-bold text-sm"><i class="fa-solid fa-database text-purple-600 mr-2"></i>Airtable</span>
+                            <button onclick="triggerSync(this)" class="bg-white border text-gray-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-100">Click to Sync</button>
+                        </div>
+                        <div class="flex items-center justify-between border p-3 rounded hover:bg-gray-50">
+                            <span class="font-bold text-sm"><i class="fa-solid fa-cube text-gray-800 mr-2"></i>Notion</span>
+                            <button onclick="triggerSync(this)" class="bg-white border text-gray-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-100">Click to Sync</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="view-esg" class="dashboard-view hidden space-y-6">
+                 <div class="glass-panel p-5 bg-blue-50 border border-blue-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-900"><i class="fa-solid fa-calculator mr-2"></i>LLM Cost & Carbon Estimator</h3>
+                            <p class="text-sm text-blue-800 mt-2">
+                                <strong>What is this?</strong> A utility to forecast the environmental and financial impact of deploying Large Language Models.
+                            </p>
+                        </div>
+                        <button onclick="switchView('dashboard')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700">View Dashboard Impact</button>
+                    </div>
+                </div>
+
+                 <div class="glass-panel p-8 max-w-4xl mx-auto">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fa-solid fa-server mr-2 text-blue-500"></i>Compute Parameters</h3>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Model Complexity</label>
+                                <select id="calc-model" class="w-full border p-2 rounded" onchange="calculateCarbon()">
+                                    <option value="0.0004">Small (Llama 7B)</option>
+                                    <option value="0.004">Medium (GPT-3.5)</option>
+                                    <option value="0.04">Large (GPT-4)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Daily Query Volume</label>
+                                <input type="number" id="calc-vol" value="5000" class="w-full border p-2 rounded" oninput="calculateCarbon()">
+                            </div>
+                        </div>
+                        <div class="bg-gray-900 text-white p-6 rounded flex justify-between">
+                            <div class="text-center">
+                                <div class="text-xs text-gray-400 uppercase font-bold">Est. CO2e</div>
+                                <div class="text-3xl font-bold text-green-400 mt-1"><span id="out-co2">0</span> kg</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-xs text-gray-400 uppercase font-bold">Est. Cost</div>
+                                <div class="text-3xl font-bold text-blue-400 mt-1">$<span id="out-cost">0</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-4 bg-gray-50 text-[10px] text-gray-500 rounded border">
+                            <strong>Calculation Logic:</strong> 
+                            Cost is estimated at $0.15 per 1k tokens (blended rate). 
+                            Carbon (CO2e) is estimated at 0.4g per query based on standard GPU energy intensity (NVIDIA A100 benchmarks) and average grid carbon intensity.
+                        </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+            <h3 class="font-bold mb-4">Add Use Case</h3>
+            <input id="new-title" class="w-full border p-2 mb-2 rounded text-sm" placeholder="Title">
+            <textarea id="new-ctx" class="w-full border p-2 mb-2 rounded text-sm" placeholder="Context"></textarea>
+            <input id="new-src" class="w-full border p-2 mb-2 rounded text-sm" placeholder="Source">
+            <select id="new-status" class="w-full border p-2 mb-2 rounded text-sm"><option>Scouting</option><option>POC</option><option>Scaled</option></select>
+            <div class="flex justify-end gap-2 mt-2">
+                <button onclick="document.getElementById('add-modal').classList.add('hidden')" class="px-3 py-1 text-sm text-gray-500">Cancel</button>
+                <button onclick="addArticle()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-bold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DEFINING FUNCTIONS ---
+        
+        function switchView(viewId) {
+            const views = document.querySelectorAll('.dashboard-view');
+            if(views) views.forEach(el => el.classList.add('hidden'));
+            
+            const target = document.getElementById('view-' + viewId);
+            if(target) target.classList.remove('hidden');
+            
+            const navItems = document.querySelectorAll('.nav-item');
+            if(navItems) navItems.forEach(el => el.classList.remove('nav-active'));
+            
+            const navEl = document.getElementById('nav-' + viewId);
+            if(navEl) navEl.classList.add('nav-active');
+        }
+
+        function resetToUser() {
+            try {
+                isViewingUser = true;
+                const simInd = document.getElementById('sim-indicator');
+                if(simInd) simInd.classList.add('hidden');
+                
+                const bTitle = document.getElementById('bubble-title');
+                if(bTitle && bTitle.childNodes[0]) bTitle.childNodes[0].textContent = "Industry Efficiency vs. Adoption ";
+
+                if(typeof radarChart !== 'undefined' && radarChart) {
+                    radarChart.data.datasets[0].label = "Score";
+                    radarChart.data.datasets[0].data = Object.values(userScores);
+                    radarChart.update();
+                }
+                
+                updateKPIs();
+                generateStrategyRec(true);
+                calculateCarbon(); 
+                
+                const panel = document.getElementById('strat-panel');
+                if(panel) {
+                    panel.classList.add('border-yellow-400');
+                    panel.classList.remove('border-blue-600');
+                }
+            } catch (e) { console.error("Error resetting user data:", e); }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userScores));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "ai_hub_scores.json");
+            dlAnchorElem.click();
+        }
+
+        function resetDefaults() {
+            localStorage.removeItem('hub_v13_scores');
+            location.reload();
+        }
+
+        function updateScore(key, val) {
+            try {
+                userScores[key] = parseFloat(val);
+                try { localStorage.setItem('hub_v13_scores', JSON.stringify(userScores)); } catch(e) {}
+                
+                renderGapTable();
+                renderHeatmap();
+                if(isViewingUser) {
+                    updateCharts();
+                    updateKPIs();
+                    generateStrategyRec(true);
+                }
+            } catch (e) { console.error("Update score failed:", e); }
+        }
+
+        function calculateCarbon() {
+            try {
+                if(typeof isViewingUser !== 'undefined' && !isViewingUser) return;
+                const mEl = document.getElementById('calc-model');
+                const vEl = document.getElementById('calc-vol');
+                if(!mEl || !vEl) return;
+                
+                const mVal = mEl.value;
+                const vVal = vEl.value;
+                const monthlyCost = (parseFloat(mVal) * parseFloat(vVal) * 30 * 0.15).toFixed(0);
+                const monthlyCo2 = (parseFloat(mVal) * parseFloat(vVal) * 30 * 0.4).toFixed(0); 
+                document.getElementById('out-co2').innerText = monthlyCo2;
+                document.getElementById('out-cost').innerText = monthlyCost;
+                document.getElementById('kpi-carbon').innerText = "$" + monthlyCost;
+            } catch (e) {}
+        }
+
+        function triggerSync(btn) {
+            btn.innerText = "Syncing...";
+            setTimeout(() => { btn.innerText = "Synced ✓"; }, 1500);
+        }
+
+        function addArticle() {
+            try {
+                articles.push({
+                    title: document.getElementById('new-title').value,
+                    context: document.getElementById('new-ctx').value,
+                    src: document.getElementById('new-src').value,
+                    status: document.getElementById('new-status').value,
+                    link: '#'
+                });
+                try { localStorage.setItem('hub_v13_arts', JSON.stringify(articles)); } catch(e) {}
+                renderLibrary();
+                document.getElementById('add-modal').classList.add('hidden');
+            } catch(e) { console.error("Add article failed", e); }
+        }
+
+        // --- 2. DATA CONSTANTS ---
+        const industryMatrix = [
+            { 
+                name: "Financial Services", s: 5, d: 5, t: 5, g: 5, talent: 5, adopt: 85, roi: 19.5, cost: 8400, gaps: 0, 
+                recTitle: "Algo-Trading & Fraud Detection", 
+                recDetail: "Scale predictive discriminative models for transaction monitoring. Migrate legacy data lakes to mesh architecture to support low-latency inference."
+            },
+            { 
+                name: "Healthcare", s: 4, d: 5, t: 3, g: 4, talent: 4, adopt: 55, roi: 16.0, cost: 6200, gaps: 2, 
+                recTitle: "Diagnostic Imaging & Triage", 
+                recDetail: "Prioritize Computer Vision for radiology. Implement RAG (Retrieval Augmented Generation) for patient record synthesis to reduce physician burnout."
+            },
+            { 
+                name: "Technology", s: 5, d: 5, t: 5, g: 3, talent: 5, adopt: 90, roi: 20.0, cost: 9500, gaps: 1, 
+                recTitle: "Agentic AI & DevOps", 
+                recDetail: "Embed Copilots into DevOps pipelines. Focus on 'Agentic Workflows' where AI creates and executes its own plans for software testing."
+            },
+            { 
+                name: "Telco", s: 4, d: 4, t: 4, g: 3, talent: 3, adopt: 75, roi: 14.5, cost: 7100, gaps: 1, 
+                recTitle: "Autonomous Network Ops", 
+                recDetail: "Deploy reinforcement learning for dynamic bandwidth allocation. Use Generative AI for Tier-1 customer support automation."
+            },
+            { 
+                name: "Retail", s: 4, d: 3, t: 3, g: 2, talent: 3, adopt: 60, roi: 12.0, cost: 5000, gaps: 3, 
+                recTitle: "Hyper-Personalization", 
+                recDetail: "Use Graph Neural Networks for recommendation engines. Optimize supply chain inventory with predictive demand forecasting models."
+            },
+            { 
+                name: "FMCG", s: 3, d: 3, t: 2, g: 2, talent: 2, adopt: 50, roi: 9.3, cost: 4200, gaps: 4, 
+                recTitle: "Marketing Mix & Formulation", 
+                recDetail: "Leverage synthetic data to model consumer behavior. Automate R&D formulation processes using molecular prediction AI."
+            },
+            { 
+                name: "Energy", s: 3, d: 2, t: 2, g: 4, talent: 3, adopt: 45, roi: 9.3, cost: 4800, gaps: 3, 
+                recTitle: "Digital Twins & Inspection", 
+                recDetail: "Utilize digital twins for asset management. Implement computer vision drones for infrastructure inspection to reduce human risk."
+            },
+            { 
+                name: "Aviation", s: 2, d: 2, t: 3, g: 5, talent: 3, adopt: 40, roi: 10.6, cost: 5100, gaps: 5, 
+                recTitle: "Predictive Maintenance", 
+                recDetail: "Focus on fuel optimization algorithms. Use NLP to digitize maintenance logs and predict component failures before they occur."
+            }
+        ];
+
+        const validatedArticles = [
+            { title: "Economic Potential of GenAI", context: "McKinsey Report", src: "McKinsey", status: "Scouting", link: "https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/the-economic-potential-of-generative-ai-the-next-productivity-frontier" },
+            { title: "AI Index Report 2024", context: "Global AI stats", src: "Stanford HAI", status: "Scouting", link: "https://hai.stanford.edu/research/ai-index-report" },
+            { title: "Gartner AI Trends", context: "Strategic Tech Trends", src: "Gartner", status: "POC", link: "https://www.gartner.com/en/information-technology/topics/artificial-intelligence" },
+            { title: "Prompt Engineering Guide", context: "Technical techniques", src: "OpenAI", status: "Scaled", link: "https://platform.openai.com/docs/guides/prompt-engineering" },
+            { title: "Building Responsible AI", context: "Google's Framework", src: "Google", status: "Scaled", link: "https://ai.google/responsibility/" },
+            { title: "Future of Work with AI", context: "Work Trend Index", src: "Microsoft", status: "POC", link: "https://www.microsoft.com/en-us/worklab/work-trend-index" },
+            { title: "State of AI Report", context: "Air Street Capital", src: "Air Street", status: "Scouting", link: "https://www.stateof.ai/" },
+            { title: "Intro to Gen AI", context: "Learning Path", src: "Google Cloud", status: "Scouting", link: "https://www.cloudskillsboost.google/paths/118" },
+            { title: "Llama 3 Model Card", context: "Open Source LLM", src: "Meta AI", status: "POC", link: "https://llama.meta.com/" },
+            { title: "Claude 3 System Card", context: "Safety & benchmarks", src: "Anthropic", status: "Scaled", link: "https://www.anthropic.com/news/claude-3-family" },
+            { title: "AI in Healthcare", context: "Diagnosis & Care", src: "HBR", status: "POC", link: "https://hbr.org/topic/subject/healthcare-sector" },
+            { title: "DeepMind AlphaFold", context: "Protein Folding", src: "DeepMind", status: "Scaled", link: "https://deepmind.google/technologies/alphafold/" },
+            { title: "Azure AI Services", context: "Enterprise Cloud", src: "Microsoft", status: "Scaled", link: "https://azure.microsoft.com/en-us/solutions/ai" },
+            { title: "AWS Machine Learning", context: "SageMaker utils", src: "AWS", status: "POC", link: "https://aws.amazon.com/machine-learning/" },
+            { title: "IBM Watsonx", context: "Enterprise Data", src: "IBM", status: "Scaled", link: "https://www.ibm.com/watsonx" },
+            { title: "Hugging Face Hub", context: "Model Repository", src: "Hugging Face", status: "Scouting", link: "https://huggingface.co/" },
+            { title: "Databricks Mosaic AI", context: "Data Lakehouse", src: "Databricks", status: "POC", link: "https://www.databricks.com/product/machine-learning" },
+            { title: "NVIDIA AI Enterprise", context: "GPU Computing", src: "NVIDIA", status: "Scaled", link: "https://www.nvidia.com/en-us/data-center/products/ai-enterprise/" },
+            { title: "Oracle AI Vector Search", context: "Database AI", src: "Oracle", status: "POC", link: "https://www.oracle.com/artificial-intelligence/" },
+            { title: "Salesforce Einstein", context: "CRM AI", src: "Salesforce", status: "Scaled", link: "https://www.salesforce.com/products/einstein/overview/" }
+        ];
+
+        // --- 3. STATE INITIALIZATION ---
+        let articles = validatedArticles;
+        let userScores = { Strategy: 3, Data: 4, Tech: 2.5, Gov: 3.5, Talent: 2.0 };
+        
+        try {
+            const storedArts = localStorage.getItem('hub_v13_arts');
+            if(storedArts) articles = JSON.parse(storedArts);
+            
+            const storedScores = localStorage.getItem('hub_v13_scores');
+            if(storedScores) userScores = JSON.parse(storedScores);
+        } catch(e) { console.log("LocalStorage restricted."); }
+
+        const benchmarks = { Strategy: 4.0, Data: 4.5, Tech: 4.0, Gov: 3.0, Talent: 3.5 };
+        let radarChart, scatterChart;
+        let isViewingUser = true;
+
+        // --- 4. STARTUP ---
+        window.onload = () => {
+            try {
+                renderHeatmap();
+                renderLibrary();
+                renderGapTable();
+                calculateCarbon();
+                initCharts();
+                updateKPIs();
+                generateStrategyRec(true);
+            } catch (e) { console.error("Initialization error:", e); }
+        };
+
+        // --- 5. LOGIC HELPERS ---
+        function loadIndustryData(industryName) {
+            isViewingUser = false;
+            
+            const ind = industryMatrix.find(i => i.name === industryName);
+            if (!ind) { return resetToUser(); }
+
+            document.getElementById('kpi-score').innerText = ((ind.s+ind.d+ind.t+ind.g)/4).toFixed(1);
+            document.getElementById('kpi-adopt').innerText = ind.adopt;
+            document.getElementById('kpi-roi').innerText = ind.roi;
+            document.getElementById('kpi-carbon').innerText = "$" + ind.cost;
+            
+            const gapsEl = document.getElementById('kpi-gaps');
+            gapsEl.innerText = ind.gaps;
+            gapsEl.className = 'text-sm font-bold text-blue-700';
+
+            // Update Bubble Title Text
+            document.getElementById('bubble-title').innerHTML = `Industry Efficiency vs. Adoption <span class="text-blue-600 ml-2 text-xs uppercase font-bold">(Viewing: ${industryName})</span>`;
+            
+            // Show Simulation Indicator
+            const simInd = document.getElementById('sim-indicator');
+            if(simInd) simInd.classList.remove('hidden');
+
+            if(typeof radarChart !== 'undefined' && radarChart) {
+                radarChart.data.datasets[0].label = industryName;
+                radarChart.data.datasets[0].data = [ind.s, ind.d, ind.t, ind.g, ind.talent]; 
+                radarChart.update();
+            }
+
+            document.getElementById('strat-status').innerText = "BENCHMARK";
+            document.getElementById('strat-rec-title').innerText = ind.recTitle;
+            document.getElementById('strat-rec-detail').innerText = ind.recDetail;
+            
+            const panel = document.getElementById('strat-panel');
+            if(panel) {
+                panel.classList.remove('border-yellow-400');
+                panel.classList.add('border-blue-600');
+            }
+        }
+
+        function generateStrategyRec(isUser) {
+            if(!isUser) return;
+            const roi = ((userScores.Data + userScores.Tech + userScores.Talent) / 15) * 20;
+            const avg = Object.values(userScores).reduce((a,b)=>a+b,0) / 5;
+            
+            let status = "";
+            let title = "";
+            let text = "";
+
+            if(avg < 2.5) {
+                status = "FOUNDATIONAL";
+                title = "Build the Core";
+                text = "Your score indicates early maturity. Prioritize Data Infrastructure and Governance before scaling. Focus on 'Quick Win' POCs to prove value.";
+            } else if (avg >= 2.5 && roi < 10) {
+                status = "INEFFICIENT";
+                title = "Unlock Value";
+                text = "You have tools but low efficiency. Your Tech/Data score is high, but Talent/Strategy is lagging. Upskill teams to leverage your stack.";
+            } else if (avg >= 4) {
+                status = "LEADER";
+                title = "Innovate & Scale";
+                text = "You are outperforming benchmarks. Shift focus to Agentic AI and creating a competitive moat through proprietary data assets.";
+            } else {
+                status = "TRANSFORMING";
+                title = "Bridge the Gaps";
+                text = "You are maturing. The critical next step is bridging the gap between Data Operations and Business Strategy via improved Governance.";
+            }
+            document.getElementById('strat-status').innerText = status;
+            document.getElementById('strat-rec-title').innerText = title;
+            document.getElementById('strat-rec-detail').innerText = text;
+        }
+
+        function updateKPIs() {
+            if(!isViewingUser) return;
+            const avg = (Object.values(userScores).reduce((a,b)=>a+b,0) / 5).toFixed(1);
+            const adopt = (avg/5 * 100).toFixed(0);
+            const roi = (((userScores.Data + userScores.Tech + userScores.Talent)/15)*20).toFixed(1);
+            
+            let gaps = 0;
+            const keys = ['Strategy', 'Data', 'Tech', 'Talent', 'Gov'];
+            keys.forEach(k => { 
+                if(userScores[k] < benchmarks[k]) gaps++; 
+            });
+
+            document.getElementById('kpi-score').innerText = avg;
+            document.getElementById('kpi-adopt').innerText = adopt;
+            document.getElementById('kpi-roi').innerText = roi;
+            
+            const gapsEl = document.getElementById('kpi-gaps');
+            gapsEl.innerText = gaps;
+            gapsEl.className = 'text-sm font-bold text-blue-700';
+        }
+
+        function renderGapTable() {
+            const tbody = document.getElementById('gap-table');
+            tbody.innerHTML = Object.keys(userScores).map(key => {
+                const delta = userScores[key] - benchmarks[key];
+                let status = delta >= 0 ? `<span class="text-green-600 font-bold">Leader</span>` : `<span class="text-red-600 font-bold">Lagging</span>`;
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-4 font-bold text-gray-700">${key}</td>
+                        <td class="p-4"><input type="range" min="1" max="5" step="0.5" value="${userScores[key]}" class="w-24 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer align-middle mr-2" oninput="updateScore('${key}', this.value)"><span class="font-bold text-blue-600">${userScores[key]}</span></td>
+                        <td class="p-4 text-gray-500">${benchmarks[key]}</td>
+                        <td class="p-4 text-sm">${status}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function updateCharts() {
+            if(typeof radarChart !== 'undefined' && radarChart) {
+                radarChart.data.datasets[0].data = Object.values(userScores);
+                radarChart.update();
+            }
+            if(typeof scatterChart !== 'undefined' && scatterChart) {
+                const avgScore = Object.values(userScores).reduce((a,b)=>a+b,0) / 5;
+                const adoptionPct = (avgScore / 5) * 100;
+                const estRoi = ((userScores.Data + userScores.Tech + userScores.Talent) / 15) * 20;
+                scatterChart.data.datasets[8].data[0].x = adoptionPct;
+                scatterChart.data.datasets[8].data[0].y = estRoi;
+                scatterChart.update();
+            }
+        }
+
+        function renderHeatmap() {
+            const tbody = document.getElementById('heatmap-body');
+            function getC(v) { return v>=5?'bg-green-600':v>=4?'bg-green-500':v>=3?'bg-yellow-400':v>=2?'bg-red-400':'bg-red-500'; }
+            
+            let html = industryMatrix.map(r => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-1 text-left font-bold text-gray-700 text-[9px]">${r.name}</td>
+                    <td class="p-1"><div class="hm-cell ${getC(r.s)}">${r.s}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(r.d)}">${r.d}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(r.talent)}">${r.talent}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(r.g)}">${r.g}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(r.t)}">${r.t}</div></td>
+                </tr>`).join('');
+            
+            html += `
+                <tr class="border-t-4 border-blue-500 bg-blue-50">
+                    <td class="p-1 text-left font-bold text-blue-900 text-[9px]">YOUR ORG</td>
+                    <td class="p-1"><div class="hm-cell ${getC(userScores.Strategy)}">${userScores.Strategy}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(userScores.Data)}">${userScores.Data}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(userScores.Talent)}">${userScores.Talent}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(userScores.Gov)}">${userScores.Gov}</div></td>
+                    <td class="p-1"><div class="hm-cell ${getC(userScores.Tech)}">${userScores.Tech}</div></td>
+                </tr>`;
+            tbody.innerHTML = html;
+        }
+
+        function renderLibrary() {
+            const tbody = document.getElementById('library-body');
+            tbody.innerHTML = articles.map((a, i) => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4"><div class="font-bold text-gray-800 text-sm">${a.title}</div><div class="text-xs text-gray-500 italic">${a.context}</div></td>
+                    <td class="p-4 text-xs font-bold text-gray-500">${a.src}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600">${a.status}</span></td>
+                    <td class="p-4 text-right"><a href="${a.link}" target="_blank" class="text-blue-600 hover:underline text-xs font-bold">Open</a></td>
+                </tr>`).join('');
+        }
+
+        function initCharts() {
+            new Chart(document.getElementById('radarChart'), {
+                type: 'radar',
+                data: { labels: Object.keys(userScores), datasets: [{ label: 'Score', data: Object.values(userScores), backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: '#2563eb' }] },
+                options: { 
+                    maintainAspectRatio: false, 
+                    scales: { r: { min: 0, max: 5, ticks: { display: false } } }, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+            
+            scatterChart = new Chart(document.getElementById('scatterChart'), {
+                type: 'bubble',
+                data: { 
+                    datasets: [
+                        { label: 'Financial Services', data: [{x: 85, y: 19.5, r: 10}], backgroundColor: '#059669' },
+                        { label: 'Technology', data: [{x: 90, y: 20.0, r: 12}], backgroundColor: '#3b82f6' },
+                        { label: 'Telco', data: [{x: 75, y: 14.5, r: 9}], backgroundColor: '#6366f1' },
+                        { label: 'Retail', data: [{x: 60, y: 12.0, r: 8}], backgroundColor: '#f59e0b' },
+                        { label: 'Healthcare', data: [{x: 55, y: 16.0, r: 9}], backgroundColor: '#ec4899' },
+                        { label: 'FMCG', data: [{x: 50, y: 9.3, r: 8}], backgroundColor: '#8b5cf6' },
+                        { label: 'Energy', data: [{x: 45, y: 9.3, r: 10}], backgroundColor: '#14b8a6' },
+                        { label: 'Aviation', data: [{x: 40, y: 10.6, r: 10}], backgroundColor: '#ef4444' },
+                        { label: 'YOU', data: [{x: 55, y: 8, r: 15}], backgroundColor: '#1e293b' }
+                    ] 
+                },
+                options: { 
+                    maintainAspectRatio: false,
+                    onClick: (e, elements) => {
+                        if(elements.length > 0) {
+                            const datasetIndex = elements[0].datasetIndex;
+                            const label = scatterChart.data.datasets[datasetIndex].label;
+                            if(label === "YOU") resetToUser();
+                            else loadIndustryData(label);
+                        }
+                    },
+                    scales: { 
+                        x: { min: 0, max: 100, title: {display:true, text:'Adoption %'} }, 
+                        y: { min: 0, max: 25, title: {display:true, text:'Efficiency Index %'} } 
+                    }, 
+                    plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: Adoption ${ctx.raw.x}%, Eff. Index ${ctx.raw.y}%` } } } 
+                }
+            });
+        }
+    </script>
+</body>
+</html>
